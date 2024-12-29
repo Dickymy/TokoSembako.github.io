@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toko Sembako Arkahan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-image: url(images/sembako.jpg);
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center;
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9); /* Transparansi */
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .barang-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .barang-actions button {
+            margin-left: 5px;
+            background-color: #007bff;
+        }
+        .barang-actions button:hover {
+            background-color: #0056b3;
+        }
+        #listBarang {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Toko Sembako Arkahan</h1>
+        <div>
+            <h3>Tambah Barang/Sembako</h3>
+            <input type="text" id="namaBarang" placeholder="Masukkan nama barang/sembako">
+            <input type="number" id="hargaBarang" placeholder="Masukkan harga barang/sembako">
+            <button onclick="tambahBarang()">Tambah Barang/Sembako</button>
+        </div>
+
+        <div>
+            <h3>Cari Barang/Sembako</h3>
+            <input type="text" id="keyword" placeholder="Masukkan keyword pencarian">
+            <button onclick="cariBarang()">Cari Barang/Sembako</button>
+        </div>
+
+        <div>
+            <button onclick="toggleListBarang()">Lihat Semua Barang</button>
+        </div>
+
+        <div id="listBarang" class="result">
+            <h3>Daftar Barang</h3>
+            <input type="text" id="searchList" placeholder="Cari di daftar barang" oninput="searchInList()">
+            <ul id="barangListContainer"></ul>
+        </div>
+
+        <div class="result" id="result">
+            <h3>Hasil Pencarian</h3>
+            <ul id="hasilPencarian"></ul>
+        </div>
+    </div>
+
+    <script>
+        let barangList = JSON.parse(localStorage.getItem('barangList')) || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderListBarang();
+        });
+
+        function tambahBarang() {
+            const nama = document.getElementById('namaBarang').value;
+            const harga = document.getElementById('hargaBarang').value;
+
+            if (nama && harga) {
+                barangList.push({ nama, harga });
+                saveToLocalStorage();
+                alert(`Barang '${nama}' dengan harga ${harga} berhasil ditambahkan.`);
+                document.getElementById('namaBarang').value = '';
+                document.getElementById('hargaBarang').value = '';
+                renderListBarang();
+            } else {
+                alert('Harap isi nama dan harga barang.');
+            }
+        }
+
+        function cariBarang() {
+            const keyword = document.getElementById('keyword').value.toLowerCase();
+            const hasilPencarian = document.getElementById('hasilPencarian');
+            hasilPencarian.innerHTML = '';
+
+            const hasil = barangList.filter(barang => barang.nama.toLowerCase().includes(keyword));
+
+            if (hasil.length > 0) {
+                hasil.forEach(barang => {
+                    const li = document.createElement('li');
+                    li.textContent = `Nama: ${barang.nama}, Harga: ${barang.harga}`;
+                    hasilPencarian.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Barang tidak ditemukan';
+                hasilPencarian.appendChild(li);
+            }
+        }
+
+        function toggleListBarang() {
+            const listBarang = document.getElementById('listBarang');
+            listBarang.style.display = listBarang.style.display === 'none' ? 'block' : 'none';
+            renderListBarang();
+        }
+
+        function renderListBarang() {
+            const listContainer = document.getElementById('barangListContainer');
+            listContainer.innerHTML = '';
+
+            barangList.forEach((barang, index) => {
+                const li = document.createElement('li');
+                li.className = 'barang-item';
+
+                const text = document.createElement('span');
+                text.textContent = `Nama: ${barang.nama}, Harga: ${barang.harga}`;
+
+                const actions = document.createElement('div');
+                actions.className = 'barang-actions';
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => editBarang(index);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Hapus';
+                deleteButton.style.backgroundColor = '#dc3545';
+                deleteButton.onclick = () => deleteBarang(index);
+
+                actions.appendChild(editButton);
+                actions.appendChild(deleteButton);
+
+                li.appendChild(text);
+                li.appendChild(actions);
+
+                listContainer.appendChild(li);
+            });
+        }
+
+        function searchInList() {
+            const keyword = document.getElementById('searchList').value.toLowerCase();
+            const listContainer = document.getElementById('barangListContainer');
+            listContainer.innerHTML = '';
+
+            const hasil = barangList.filter(barang => barang.nama.toLowerCase().includes(keyword));
+
+            hasil.forEach((barang, index) => {
+                const li = document.createElement('li');
+                li.className = 'barang-item';
+
+                const text = document.createElement('span');
+                text.textContent = `Nama: ${barang.nama}, Harga: ${barang.harga}`;
+
+                const actions = document.createElement('div');
+                actions.className = 'barang-actions';
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => editBarang(index);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Hapus';
+                deleteButton.style.backgroundColor = '#dc3545';
+                deleteButton.onclick = () => deleteBarang(index);
+
+                actions.appendChild(editButton);
+                actions.appendChild(deleteButton);
+
+                li.appendChild(text);
+                li.appendChild(actions);
+
+                listContainer.appendChild(li);
+            });
+        }
+
+        function editBarang(index) {
+            const barang = barangList[index];
+            const namaBaru = prompt('Masukkan nama baru:', barang.nama);
+            const hargaBaru = prompt('Masukkan harga baru:', barang.harga);
+
+            if (namaBaru && hargaBaru) {
+                barangList[index] = { nama: namaBaru, harga: hargaBaru };
+                saveToLocalStorage();
+                alert('Barang berhasil diperbarui!');
+                renderListBarang();
+            } else {
+                alert('Perubahan dibatalkan.');
+            }
+        }
+
+        function deleteBarang(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
+                barangList.splice(index, 1);
+                saveToLocalStorage();
+                alert('Barang berhasil dihapus!');
+                renderListBarang();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('barangList', JSON.stringify(barangList));
+        }
+    </script>
+</body>
+</html>
